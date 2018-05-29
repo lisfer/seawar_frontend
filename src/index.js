@@ -32,16 +32,6 @@ class SeaField extends React.Component {
                     (v, j) => ({x: j, y: i, value: SEA.EMPTY})));
     }
 
-    initShips() {
-        let self = this;
-        fetch('http://localhost:5000/init_user_ship', {method: 'POST'})
-            .then(
-                (response) => response.json())
-            .then(
-                (data) => self.set_many(data.filter((el) => el.value === SEA.SHIP)))
-            .catch(function(error) { console.log(error); });
-    }
-
     set_many(cells_update) {
         let state_cells = this.state.cells;
         cells_update.map((el) => (state_cells[el.y][el.x].value = el.value));
@@ -55,7 +45,6 @@ class SeaField extends React.Component {
             max_y: this.props.max_y,
             cells: this.createMatrix(this.props.max_x, this.props.max_y)
         };
-        this.initShips();
     }
 
     render () {
@@ -68,13 +57,35 @@ class SeaField extends React.Component {
                 </div>));
 
         return (
-            <div>{cells}</div>
+            <div className ="seaField">{cells}</div>
         )
     }
 }
 
 
+class SeaFieldUser extends SeaField {
+
+    constructor(props) {
+        super(props);
+        this.initShips();
+    }
+
+    initShips() {
+        let self = this;
+        fetch('http://localhost:5000/init_user_ship', {method: 'POST'})
+            .then(
+                (response) => response.json())
+            .then(
+                (data) => self.set_many(data.filter((el) => el.value === SEA.SHIP)))
+            .catch(function(error) { console.log(error); });
+    }
+}
+
+
 ReactDOM.render(
-  <SeaField max_x={10} max_y={10}/>,
+    <div>
+        <SeaFieldUser max_x={10} max_y={10}/>
+        <SeaField max_x={10} max_y={10}/>
+    </div>,
   document.getElementById('root')
 );

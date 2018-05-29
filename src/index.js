@@ -3,22 +3,17 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 
+const SEA = {EMPTY:0, SHIP:10, BORDER:1};
+
 class Cell extends React.Component {
 
-    constructor(props) {
-        super(props);
+    render () {
 
         let className = 'cell';
-        if (this.props.is_ship) className += ' shipCell';
-        if (this.props.is_border) className += ' borderCell';
-
-        this.state = {
-            className: className
-        }
-    }
-    render () {
+        if (this.props.value === SEA.SHIP) className += ' shipCellUser';
+        if (this.props.value === SEA.BORDER) className += ' borderCell';
         return (
-            <div className={this.state.className}>&nbsp;</div>
+            <div className={className}>&nbsp;</div>
         )
     }
 }
@@ -34,7 +29,23 @@ class SeaField extends React.Component {
                 {length: max_y},
                 (v, i) => Array.from(
                     {length: max_x},
-                    (v, j) => ({x: j, y: i, is_ship: false, is_border: false})));
+                    (v, j) => ({x: j, y: i, value: SEA.EMPTY})));
+    }
+
+    initShips() {
+        let self = this;
+        fetch('http://localhost:5000/init_user_ship', {method: 'POST'})
+            .then(
+                (response) => response.json())
+            .then(
+                (data) => self.set_many(data.filter((el) => el.value === SEA.SHIP)))
+            .catch(function(error) { console.log(error); });
+    }
+
+    set_many(cells_update) {
+        let state_cells = this.state.cells;
+        cells_update.map((el) => (state_cells[el.y][el.x].value = el.value));
+        this.setState({cells: state_cells});
     }
 
     constructor(props) {
@@ -43,15 +54,17 @@ class SeaField extends React.Component {
             max_x: this.props.max_x,
             max_y: this.props.max_y,
             cells: this.createMatrix(this.props.max_x, this.props.max_y)
-        }
+        };
+        this.initShips();
     }
+
     render () {
         let self = this;
 
         let cells = self.state.cells.map(
             (row, y) =>  (
                 <div key={y}>
-                    {row.map((el, x) => <Cell key={`${y}_${x}`} x={x} y={y}/>)}
+                    {row.map((el, x) => { return <Cell key={`${y}_${x}`} x={x} y={y} value={el.value}/>})}
                 </div>));
 
         return (

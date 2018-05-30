@@ -11,6 +11,33 @@
     margin: 1px;
 }
 
-.shipCellUser {
+.cellShipUser {
     background-color: lightseagreen;
+}
+
+.cellMissed {
+    color: #1643af;
+    background-color: #cccccc !important;
+}
+.cellMissed:after {
+    content: '\29BF';
+    margin-left: 1px;
+}
+
+.cellHit {
+    color: #b50e0e;
+    background-color: #ff625f !important;
+}
+.cellHit:after {
+    content: '\2715';
+    margin: 1px 1px 0 0;
+}
+
+.cellBorder {
+    background-color: #eee;
+    color: #66cffb;
+}
+.cellBorder:after {
+    content: '\2022';
+    margin-left: 3px;
 }

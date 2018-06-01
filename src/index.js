@@ -3,9 +3,17 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 
-const SEA = {EMPTY: 'empty', SHIP: 'ship', BORDER: 'border', MISSED: -1, HIT: -10};
-const SIGNALS = {HIT:2, MISSED:3, KILLED:5, WIN:5};
+const SEA = {EMPTY: 'empty', SHIP: 'ship', BORDER: 'border', MISS: 'miss', HIT: 'hit'};
+const SIGNALS = {MISS: 'miss', HIT: 'hit', KILLED:5, WIN:5};
 const SERVER = 'http://localhost:5000';
+
+let preparePostData = (data) => {
+    let form = new FormData();
+    for (let k in data) {
+        form.append(k, data[k]);
+    }
+    return form;
+};
 
 class Cell extends React.Component {
 
@@ -14,7 +22,7 @@ class Cell extends React.Component {
         let className = 'cell';
         if (this.props.value === SEA.SHIP) className += ' cellShipUser';
         if (this.props.value === SEA.BORDER) className += ' cellBorder';
-        if (this.props.value === SEA.MISSED) className += ' cellMissed';
+        if (this.props.value === SEA.MISS) className += ' cellMissed';
         if (this.props.value === SEA.HIT) className += ' cellHit';
         return (
             <div className={className} onClick={this.props.clickHandler}>&nbsp;</div>
@@ -30,7 +38,7 @@ class SeaField extends React.Component {
             cells: [],
             maxX: null,
             maxY: null
-        }
+        };
         this.initField();
     }
 
@@ -46,7 +54,7 @@ class SeaField extends React.Component {
             (v, j) => ({x: j, y: i, value: SEA.EMPTY})));
     }
 
-    updateCoordinated(coords, value) {
+    updateCoordinates(coords, value) {
         /*
             @param coords: list of two-values lists: [ [x, y], ...]
             @param value:
@@ -54,14 +62,14 @@ class SeaField extends React.Component {
         let stateCells = this.state.cells;
         coords.map((el) => {
             stateCells[el[1]][el[0]].value = value;
-        })
-        this.setState({cells: state_cells});
+        });
+        this.setState({cells: stateCells});
     }
 
-    setMany(cells_update, value) {
-        let state_cells = this.state.cells;
-        cells_update.map((el) => (state_cells[el.y][el.x].value = el.value));
-        this.setState({cells: state_cells});
+    set(x, y, value) {
+        let stateCells = this.state.cells;
+        stateCells[y][x].value = value;
+        this.setState({cells: stateCells});
     }
 
     createField (maxX, maxY) {
@@ -97,11 +105,13 @@ class SeaFieldUser extends SeaField {
         let self = this;
         fetch(SERVER + '/api/init_user_ship', {method: 'POST', credentials: 'include'})
             .then(
-                (resp) => {if (!resp.ok) throw Error(resp.statusText); return resp.json()})
+                (resp) => {
+                    if (!resp.ok) throw Error(resp.statusText);
+                    return resp.json()})
             .then(
                 (data) => {
                     self.createField(data.max_x, data.max_y);
-                    self.updateCoordinated(data.ships, SEA.SHIP);
+                    self.updateCoordinates(data.ships, SEA.SHIP);
                 })
             .catch((err) => console.log(err));
     }
@@ -112,13 +122,15 @@ class SeaFieldComp extends SeaField {
 
     constructor(props) {
         super(props);
-        this.state['frozen'] = false;
+        this.state['blockClicks'] = false;
     }
 
     initField() {
         fetch(SERVER + '/api/init_enemy_ship', {method: 'POST', credentials: 'include'})
             .then(
-                (resp) => {if (!resp.ok) throw Error(resp.statusText); return resp.json()})
+                (resp) => {
+                    if (!resp.ok) throw Error(resp.statusText);
+                    return resp.json()})
             .then(
                 (data) => this.createField(data.max_x, data.max_y))
             .catch((err) => console.log(err));
@@ -126,11 +138,8 @@ class SeaFieldComp extends SeaField {
 
     cellClick(x, y) {
         let self = this;
-        if (self.state.frozen) return;
-        let data = new FormData();
-        data.append('x', x);
-        data.append('y', y);
-        fetch(SERVER + '/api/user_shoot', {method: 'POST', body: data, credentials: 'include'})
+        if (self.state.blockClicks) return;
+        fetch(SERVER + '/api/user_shoot', {method: 'POST', body: preparePostData({'x': x, 'y': y}), credentials: 'include'})
             .then(
                 (resp) => {
                     if (!resp.ok) throw Error(resp.statusText);
@@ -138,18 +147,15 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    self.setMany(data.cells.map((el) => {
-                        return el
-                    }));
-                    self.setMany(data.border.map((el) => {
-                        el.value = el.value === SEA.EMPTY ? SEA.BORDER : el.value;
-                        return el
-                    }));
+                    console.log(data, data.signal);
+                    self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
+                    if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
+                    if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
                 })
             .catch((err) => console.log(err))
-            .finally(() => self.setState({frozen: false}));
+            .finally(() => self.setState({blockClicks: false}));
 
-        self.setState({frozen: true});
+        self.setState({blockClicks: true});
     }
 
     renderCells () {

@@ -122,11 +122,6 @@ class SeaFieldUser extends SeaField {
 
 class SeaFieldComp extends SeaField {
 
-    constructor(props) {
-        super(props);
-        this.state['blockClicks'] = false;
-    }
-
     initField() {
         fetch(SERVER + '/api/init_enemy_ship', {method: 'POST', credentials: 'include'})
             .then(
@@ -140,7 +135,7 @@ class SeaFieldComp extends SeaField {
 
     cellClick(x, y) {
         let self = this;
-        if (self.state.blockClicks) return;
+        if (self.blockClicks) return;
         fetch(SERVER + '/api/user_shoot', {method: 'POST', body: preparePostData({'x': x, 'y': y}), credentials: 'include'})
             .then(
                 (resp) => {
@@ -155,9 +150,9 @@ class SeaFieldComp extends SeaField {
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
                 })
             .catch((err) => console.log(err))
-            .finally(() => self.setState({blockClicks: false}));
+            .finally(() => self.blockClicks = false);
 
-        self.setState({blockClicks: true});
+        self.blockClicks = true;
     }
 
     renderCells () {
@@ -165,7 +160,7 @@ class SeaFieldComp extends SeaField {
             (row, y) => (
                 <div key={y}>
                     {row.map(
-                        (el, x) => <Cell key={`${y}_${x}`} clickHandler={() => this.cellClick(x, y)}
+                        (el, x) => <Cell key={`${y}_${x}`} clickHandler={el.value === SEA.EMPTY ? () => this.cellClick(x, y) : null}
                                          x={x} y={y} value={el.value}/>)}
                 </div>));
     }

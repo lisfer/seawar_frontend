@@ -60,9 +60,11 @@ class SeaField extends React.Component {
             @param value:
          */
         let stateCells = this.state.cells;
-        coords.map((el) => {
-            stateCells[el[1]][el[0]].value = value;
-        });
+        coords
+            .filter(
+                (el) => (stateCells[el[1]][el[0]].value === SEA.EMPTY))
+            .map(
+                (el) => (stateCells[el[1]][el[0]].value = value));
         this.setState({cells: stateCells});
     }
 

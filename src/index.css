@@ -86,3 +86,20 @@
     height: 200px;
     overflow-y: scroll;
 }
+.loggerLine .subject {
+    font-style: italic;
+    color: #343d88;
+    margin: 0 10px;
+}
+
+.loggerLine .time {
+    color: #aaa;
+}
+
+.loggerLine.time:after {
+    content: ' ]';
+}
+
+.loggerLine.time:before {
+    content: '[ ';
+}

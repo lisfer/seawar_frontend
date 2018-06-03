@@ -218,8 +218,8 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    console.log('user shoot', data);
-                    logMessage(`User shoots to (${data.x}, ${data.y}) => ${data.signal}`);
+                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`, {subject: 'User'});
+
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
@@ -249,8 +249,7 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    console.log('comp shoot', data);
-                    logMessage(`Computer shoots to (${data.x}, ${data.y}) => ${data.signal}`);
+                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`, {subject: 'Computer'});
                     observer.trigger(
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)});
@@ -273,8 +272,28 @@ class SeaFieldComp extends SeaField {
 }
 
 
-function logMessage(text) {
-    observer.trigger('ADD_MESSAGE', text);
+function logMessage(text, data={}) {
+    data.text = text;
+    observer.trigger('ADD_MESSAGE', data);
+}
+
+class LoggerLine extends React.Component {
+
+    componentDidMount() {
+        var current = ReactDOM.findDOMNode(this);
+        current.scrollIntoView();
+        // set el height and width etc.
+    }
+
+    render() {
+        return (
+            <div className="loggerLine">
+                <span className="time">{this.props.msg_time}</span>
+                <span className="subject">{this.props.msg_subject}</span>
+                <span className="text">{this.props.msg_text}</span>
+            </div>
+        )
+    }
 }
 
 class Logger extends React.Component {
@@ -287,20 +306,23 @@ class Logger extends React.Component {
         observer.add('ADD_MESSAGE', this.addMessage.bind(this));
     }
 
-    addMessage(text) {
+    addMessage(data) {
         let msg = this.state.messages;
-        let dataStr = new Date();
-        dataStr = `${dataStr.getHours()}:${dataStr.getMinutes()}:${dataStr.getSeconds()}.${dataStr.getMilliseconds()}  :  `;
-        msg.unshift(dataStr + text);
+        let msg_line = {
+            time: new Date().toLocaleTimeString(),
+            text: data.text,
+            subject: data.subject,
+        };
+        msg.push(msg_line);
         this.setState({
             messages: msg
         })
     }
 
     renderMessages() {
-        let r = this.state.messages.map((line, i) => (<div key={i} className="loggerLine">{line}</div>));
-        console.log(r);
-        return r;
+        return this.state.messages.map(
+            (line, i) => (<LoggerLine key={i} msg_time={line.time} msg_subject={line.subject}
+                                      msg_text={line.text} />));
     }
 
     render () {

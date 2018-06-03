@@ -6,7 +6,7 @@ import Observer from "./observer";
 
 const SEA = {EMPTY: 'empty', SHIP: 'ship', BORDER: 'border', MISS: 'miss', HIT: 'hit'};
 const SIGNALS = {MISS: 'miss', HIT: 'hit', KILLED: 'killed', WIN: 'win'};
-const GAME_RESULT = {WINNER: 'winner', LOSER: 'looser'};
+const GAME_RESULT = {ALIVE: 'alive', DEFEAT: 'defeated'};
 const SERVER = 'http://localhost:5000';
 
 
@@ -181,9 +181,10 @@ class SeaFieldUser extends SeaField {
         if (data.border) this.updateCoordinates(data.border, SEA.BORDER);
     }
 
-    gameFinished(is_winner=false) {
+    gameFinished(data={}) {
+        console.log('user', data);
         this.setState({
-            gameFinishedClassName: is_winner ? GAME_RESULT.WINNER: GAME_RESULT.LOSER
+            gameFinishedClassName: data.is_alive ? GAME_RESULT.ALIVE: GAME_RESULT.DEFEAT
         });
     }
 }
@@ -197,12 +198,13 @@ class SeaFieldComp extends SeaField {
         })
     }
 
-    gameFinished(is_winner=false) {
+    gameFinished(is_alive=false) {
+        console.log('com', is_alive);
         this.blockClicks = true;
         this.setState({
-            gameFinishedClassName: is_winner ? GAME_RESULT.WINNER: GAME_RESULT.LOSER
+            gameFinishedClassName: is_alive ? GAME_RESULT.ALIVE: GAME_RESULT.DEFEAT
         });
-        observer.trigger('GAME_FINISHED', {is_winner: !is_winner});
+        observer.trigger('GAME_FINISHED', {is_alive: !is_alive});
     }
 
     cellClick(x, y) {
@@ -254,7 +256,7 @@ class SeaFieldComp extends SeaField {
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)})
                     if (data.signal == SIGNALS.WIN) {
-                        this.gameFinished(false);
+                        this.gameFinished(true);
                     } else if (data.signal != SIGNALS.MISS) this.computerShoot();
                 })
             .catch((err) => console.log(err))

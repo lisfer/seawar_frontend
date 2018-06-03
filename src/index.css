@@ -8,11 +8,11 @@
     display: inline-block;
 }
 
-.seaField.winner {
+.seaField.defeated {
     box-shadow: 0 0 50px #ffe10e;
 }
 
-.seaField.looser {
+.seaField.alive {
     opacity: 0.5;
 }
 

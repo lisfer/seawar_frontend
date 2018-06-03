@@ -103,3 +103,9 @@
 .loggerLine.time:before {
     content: '[ ';
 }
+.loggerLine.warning {
+    background-color: #ffdede;
+}
+.loggerLine.attention {
+    background-color: #fff0df
+}

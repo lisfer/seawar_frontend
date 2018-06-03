@@ -218,7 +218,8 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`, {subject: 'User'});
+                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`,
+                        {subject: 'User', result: data.signal});
 
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
@@ -249,7 +250,8 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`, {subject: 'Computer'});
+                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`,
+                        {subject: 'Computer', result: data.signal});
                     observer.trigger(
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)});
@@ -287,7 +289,7 @@ class LoggerLine extends React.Component {
 
     render() {
         return (
-            <div className="loggerLine">
+            <div className={"loggerLine " + this.props.lineClass}>
                 <span className="time">{this.props.msg_time}</span>
                 <span className="subject">{this.props.msg_subject}</span>
                 <span className="text">{this.props.msg_text}</span>
@@ -312,6 +314,7 @@ class Logger extends React.Component {
             time: new Date().toLocaleTimeString(),
             text: data.text,
             subject: data.subject,
+            lineClass: data.result === SIGNALS.HIT ? 'attention' : data.result === SIGNALS.KILLED ? 'warning' : ''
         };
         msg.push(msg_line);
         this.setState({
@@ -321,7 +324,7 @@ class Logger extends React.Component {
 
     renderMessages() {
         return this.state.messages.map(
-            (line, i) => (<LoggerLine key={i} msg_time={line.time} msg_subject={line.subject}
+            (line, i) => (<LoggerLine lineClass={line.lineClass} key={i} msg_time={line.time} msg_subject={line.subject}
                                       msg_text={line.text} />));
     }
 

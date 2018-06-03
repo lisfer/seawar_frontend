@@ -96,11 +96,11 @@
     color: #aaa;
 }
 
-.loggerLine.time:after {
+.loggerLine .time::after {
     content: ' ]';
 }
 
-.loggerLine.time:before {
+.loggerLine .time:before {
     content: '[ ';
 }
 .loggerLine.warning {

@@ -228,6 +228,7 @@ class SeaFieldComp extends SeaField {
                         this.computerShoot();
                     }
                     if (data.signal === SIGNALS.WIN) {
+                        logMessage('USER WIN!!!');
                         this.gameFinished(false);
                     } else {
                         self.blockClicks = false;
@@ -256,6 +257,7 @@ class SeaFieldComp extends SeaField {
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)});
                     if (data.signal === SIGNALS.WIN) {
+                        logMessage('COMPUTER WIN!!!');
                         this.gameFinished(true);
                     } else if (data.signal !== SIGNALS.MISS) this.computerShoot();
                 })

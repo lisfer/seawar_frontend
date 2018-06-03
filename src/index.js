@@ -10,7 +10,7 @@ const GAME_RESULT = {ALIVE: 'alive', DEFEAT: 'defeated'};
 const SERVER = 'http://localhost:5000';
 
 
-var observer = new Observer();
+const observer = new Observer();
 window.observer = observer;
 
 
@@ -22,21 +22,21 @@ let preparePostData = (data) => {
     return form;
 };
 
-let post = (url, handler, final_hander) => {
+let post = (url, handler, final_handler) => {
     /*
     synchronous post request
      */
-    var request = new XMLHttpRequest();
+    let request = new XMLHttpRequest();
     request.open('POST', url, false);
     request.onload = function() {
         if (request.status >= 200 && request.status < 400) {
             // Success!
-            var data = JSON.parse(request.responseText);
+            let data = JSON.parse(request.responseText);
             handler(data);
         } else {
             console.warn('connection error:', request.responseText);
         }
-        if (final_hander) final_hander();
+        if (final_handler) final_handler();
     };
     request.onerror = function() {
       console.warn('connection error:', request.responseText);
@@ -112,7 +112,7 @@ class SeaField extends React.Component {
             maxX: maxX,
             maxY: maxY,
             cells: this.createMatrix(maxX, maxY)
-        }
+        };
         this.setState(data);
         return data;
     }
@@ -129,7 +129,7 @@ class SeaField extends React.Component {
         let letters = '';
         if (this.state.cells.length) {
             letters = this.state.cells[0].map(
-                (cell, i) => (<div class="fieldLetters">{'abcdefghik'[i]}</div>));
+                (cell, i) => (<div className="fieldLetters">{'abcdefghik'[i]}</div>));
         }
         return letters;
     }
@@ -138,7 +138,7 @@ class SeaField extends React.Component {
         let numbers = '';
         if (this.state.cells.length) {
             numbers = this.state.cells.map(
-                (cell, i) => (<div class="fieldNumbers">{i}</div>));
+                (cell, i) => (<div className="fieldNumbers">{i}</div>));
         }
         return numbers;
     }
@@ -177,7 +177,7 @@ class SeaFieldUser extends SeaField {
     }
 
     incomeShoot(data) {
-        this.set(data.x, data.y, (data.value == true ? SEA.HIT : SEA.MISS));
+        this.set(data.x, data.y, (data.value === true ? SEA.HIT : SEA.MISS));
         if (data.border) this.updateCoordinates(data.border, SEA.BORDER);
     }
 
@@ -223,10 +223,10 @@ class SeaFieldComp extends SeaField {
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
-                    if (data.signal == SIGNALS.MISS) {
+                    if (data.signal === SIGNALS.MISS) {
                         this.computerShoot();
                     }
-                    if (data.signal == SIGNALS.WIN) {
+                    if (data.signal === SIGNALS.WIN) {
                         this.gameFinished(false);
                     } else {
                         self.blockClicks = false;
@@ -241,8 +241,6 @@ class SeaFieldComp extends SeaField {
     }
 
     computerShoot () {
-        let self = this;
-
         fetch(SERVER + '/api/computer_shoot', {method: 'POST', credentials: 'include'})
             .then(
                 (resp) => {
@@ -254,10 +252,10 @@ class SeaFieldComp extends SeaField {
                     console.log('comp shoot', data);
                     observer.trigger(
                         'SHOOT_TO_USER',
-                        {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)})
-                    if (data.signal == SIGNALS.WIN) {
+                        {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)});
+                    if (data.signal === SIGNALS.WIN) {
                         this.gameFinished(true);
-                    } else if (data.signal != SIGNALS.MISS) this.computerShoot();
+                    } else if (data.signal !== SIGNALS.MISS) this.computerShoot();
                 })
             .catch((err) => console.log(err))
     }

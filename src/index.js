@@ -15,6 +15,29 @@ let preparePostData = (data) => {
     return form;
 };
 
+let post = (url, handler, final_hander) => {
+    /*
+    synchronous post request
+     */
+    var request = new XMLHttpRequest();
+    request.open('POST', url, false);
+    request.onload = function() {
+        if (request.status >= 200 && request.status < 400) {
+            // Success!
+            var data = JSON.parse(request.responseText);
+            handler(data);
+        } else {
+            console.warn('connection error:', request.responseText);
+        }
+        if (final_hander) final_hander();
+    };
+    request.onerror = function() {
+      console.warn('connection error:', request.responseText);
+    };
+    request.withCredentials = true;
+    request.send();
+};
+
 class Cell extends React.Component {
 
     render () {
@@ -39,7 +62,11 @@ class SeaField extends React.Component {
             maxX: null,
             maxY: null
         };
-        this.initField();
+        //  this.initField();
+    }
+
+    componentDidMount() {
+       this.initField();
     }
 
     initField() {}
@@ -54,12 +81,11 @@ class SeaField extends React.Component {
             (v, j) => ({x: j, y: i, value: SEA.EMPTY})));
     }
 
-    updateCoordinates(coords, value) {
+    updateCoordinates(coords, value, stateCells=this.state.cells) {
         /*
             @param coords: list of two-values lists: [ [x, y], ...]
             @param value:
          */
-        let stateCells = this.state.cells;
         coords
             .filter(
                 (el) => (stateCells[el[1]][el[0]].value === SEA.EMPTY))
@@ -75,11 +101,13 @@ class SeaField extends React.Component {
     }
 
     createField (maxX, maxY) {
-        this.setState({
+        let data = {
             maxX: maxX,
             maxY: maxY,
             cells: this.createMatrix(maxX, maxY)
-        })
+        }
+        this.setState(data);
+        return data;
     }
 
     renderCells () {
@@ -105,17 +133,9 @@ class SeaFieldUser extends SeaField {
 
     initField() {
         let self = this;
-        fetch(SERVER + '/api/init_user_ship', {method: 'POST', credentials: 'include'})
-            .then(
-                (resp) => {
-                    if (!resp.ok) throw Error(resp.statusText);
-                    return resp.json()})
-            .then(
-                (data) => {
-                    self.createField(data.max_x, data.max_y);
-                    self.updateCoordinates(data.ships, SEA.SHIP);
-                })
-            .catch((err) => console.log(err));
+        post(SERVER + '/api/init_user_ship', (data) => {
+            self.updateCoordinates(data.ships, SEA.SHIP, self.createField(data.max_x, data.max_y).cells);
+        })
     }
 }
 
@@ -123,19 +143,15 @@ class SeaFieldUser extends SeaField {
 class SeaFieldComp extends SeaField {
 
     initField() {
-        fetch(SERVER + '/api/init_enemy_ship', {method: 'POST', credentials: 'include'})
-            .then(
-                (resp) => {
-                    if (!resp.ok) throw Error(resp.statusText);
-                    return resp.json()})
-            .then(
-                (data) => this.createField(data.max_x, data.max_y))
-            .catch((err) => console.log(err));
+        post(SERVER + '/api/init_enemy_ship', (data) => {
+            this.createField(data.max_x, data.max_y);
+        })
     }
 
     cellClick(x, y) {
         let self = this;
         if (self.blockClicks) return;
+
         fetch(SERVER + '/api/user_shoot', {method: 'POST', body: preparePostData({'x': x, 'y': y}), credentials: 'include'})
             .then(
                 (resp) => {
@@ -144,7 +160,6 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    console.log(data, data.signal);
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);

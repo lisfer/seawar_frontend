@@ -1,6 +1,11 @@
+
+.seaFieldSurrounder {
+    display: inline-block;
+}
+
 .seaField {
-    margin: 20px;
-    float: left;
+    margin: 20px 20px 20px 0;
+    display: inline-block;
 }
 
 .seaField.winner {
@@ -11,8 +16,27 @@
     opacity: 0.5;
 }
 
+.seaField .fieldLetters {
+    display: inline-block;
+    width: 24px;
+    text-align: center;
+    color: #2491bf;
+    font-weight: bold;
+}
+
+.fieldNumbersBlock {
+    display: inline-block;
+    width: 15px;
+}
+
+.fieldNumbersBlock .fieldNumbers {
+    height: 24px;
+    color: #2491bf;
+    font-weight: bold;
+}
+
 .cell {
-    cursor: pointer;
+    cursor: default;
     display: inline-block;
     border: 1px solid #66cffb;
     width: 20px;

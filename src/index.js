@@ -125,12 +125,37 @@ class SeaField extends React.Component {
                 </div>));
     }
 
+    renderTopCaptions () {
+        let letters = '';
+        if (this.state.cells.length) {
+            letters = this.state.cells[0].map(
+                (cell, i) => (<div class="fieldLetters">{'abcdefghik'[i]}</div>));
+        }
+        return letters;
+    }
+
+    renderLeftCations () {
+        let numbers = '';
+        if (this.state.cells.length) {
+            numbers = this.state.cells.map(
+                (cell, i) => (<div class="fieldNumbers">{i}</div>));
+        }
+        return numbers;
+    }
+
     render () {
 
         let cells = this.renderCells();
 
         return (
-            <div className ={'seaField ' + this.state.gameFinishedClassName}>{cells}</div>
+            <div className="seaFieldSurrounder">
+                <div className="fieldNumbersBlock">{this.renderLeftCations()}</div>
+                <div className ={'seaField ' + this.state.gameFinishedClassName}>
+
+                    <div>{this.renderTopCaptions()}</div>
+                    {cells}
+                </div>
+            </div>
         )
     }
 }
@@ -208,7 +233,7 @@ class SeaFieldComp extends SeaField {
             .catch((err) => {
                 self.blockClicks = false;
                 console.log(err)
-            })
+            });
 
         self.blockClicks = true;
     }

@@ -129,7 +129,7 @@ class SeaField extends React.Component {
         let letters = '';
         if (this.state.cells.length) {
             letters = this.state.cells[0].map(
-                (cell, i) => (<div className="fieldLetters">{'abcdefghik'[i]}</div>));
+                (cell, i) => (<div key={i} className="fieldLetters">{'abcdefghik'[i]}</div>));
         }
         return letters;
     }
@@ -138,7 +138,7 @@ class SeaField extends React.Component {
         let numbers = '';
         if (this.state.cells.length) {
             numbers = this.state.cells.map(
-                (cell, i) => (<div className="fieldNumbers">{i}</div>));
+                (cell, i) => (<div key={i} className="fieldNumbers">{i}</div>));
         }
         return numbers;
     }
@@ -219,6 +219,7 @@ class SeaFieldComp extends SeaField {
             .then(
                 (data) => {
                     console.log('user shoot', data);
+                    logMessage(`User shoots to (${data.x}, ${data.y}) => ${data.signal}`);
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
@@ -249,6 +250,7 @@ class SeaFieldComp extends SeaField {
             .then(
                 (data) => {
                     console.log('comp shoot', data);
+                    logMessage(`Computer shoots to (${data.x}, ${data.y}) => ${data.signal}`);
                     observer.trigger(
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)});
@@ -270,10 +272,52 @@ class SeaFieldComp extends SeaField {
     }
 }
 
+
+function logMessage(text) {
+    observer.trigger('ADD_MESSAGE', text);
+}
+
+class Logger extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            messages: []
+        };
+        observer.add('ADD_MESSAGE', this.addMessage.bind(this));
+    }
+
+    addMessage(text) {
+        let msg = this.state.messages;
+        let dataStr = new Date();
+        dataStr = `${dataStr.getHours()}:${dataStr.getMinutes()}:${dataStr.getSeconds()}.${dataStr.getMilliseconds()}  :  `;
+        msg.unshift(dataStr + text);
+        this.setState({
+            messages: msg
+        })
+    }
+
+    renderMessages() {
+        let r = this.state.messages.map((line, i) => (<div key={i} className="loggerLine">{line}</div>));
+        console.log(r);
+        return r;
+    }
+
+    render () {
+        return (
+            <div className = "logger" >
+                    -- logger --
+                {this.renderMessages()}
+            </div>
+        )
+    }
+}
+
 ReactDOM.render(
     <div>
         <SeaFieldUser max_x={10} max_y={10}/>
         <SeaFieldComp max_x={10} max_y={10}/>
+        <Logger />
     </div>,
   document.getElementById('root')
 );

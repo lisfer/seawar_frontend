@@ -77,3 +77,12 @@
     content: '\2022';
     margin-left: 3px;
 }
+
+.logger {
+    border: 4px double #71d2ff;
+    padding: 10px;
+    margin: 10px;
+    color: #4e7ff5;
+    height: 200px;
+    overflow-y: scroll;
+}

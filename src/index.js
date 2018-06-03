@@ -5,7 +5,8 @@ import Observer from "./observer";
 
 
 const SEA = {EMPTY: 'empty', SHIP: 'ship', BORDER: 'border', MISS: 'miss', HIT: 'hit'};
-const SIGNALS = {MISS: 'miss', HIT: 'hit', KILLED:5, WIN:5};
+const SIGNALS = {MISS: 'miss', HIT: 'hit', KILLED: 'killed', WIN: 'win'};
+const GAME_RESULT = {WINNER: 'winner', LOSER: 'looser'};
 const SERVER = 'http://localhost:5000';
 
 
@@ -66,7 +67,8 @@ class SeaField extends React.Component {
         this.state = {
             cells: [],
             maxX: null,
-            maxY: null
+            maxY: null,
+            gameFinishedClassName: ''
         };
     }
 
@@ -128,7 +130,7 @@ class SeaField extends React.Component {
         let cells = this.renderCells();
 
         return (
-            <div className ="seaField">{cells}</div>
+            <div className ={'seaField ' + this.state.gameFinishedClassName}>{cells}</div>
         )
     }
 }
@@ -139,6 +141,7 @@ class SeaFieldUser extends SeaField {
     constructor(props) {
         super(props);
         observer.add('SHOOT_TO_USER', this.incomeShoot.bind(this));
+        observer.add('GAME_FINISHED', this.gameFinished.bind(this));
     }
 
     initField() {
@@ -152,6 +155,12 @@ class SeaFieldUser extends SeaField {
         this.set(data.x, data.y, (data.value == true ? SEA.HIT : SEA.MISS));
         if (data.border) this.updateCoordinates(data.border, SEA.BORDER);
     }
+
+    gameFinished(is_winner=false) {
+        this.setState({
+            gameFinishedClassName: is_winner ? GAME_RESULT.WINNER: GAME_RESULT.LOSER
+        });
+    }
 }
 
 
@@ -161,6 +170,14 @@ class SeaFieldComp extends SeaField {
         post(SERVER + '/api/init_enemy_ship', (data) => {
             this.createField(data.max_x, data.max_y);
         })
+    }
+
+    gameFinished(is_winner=false) {
+        this.blockClicks = true;
+        this.setState({
+            gameFinishedClassName: is_winner ? GAME_RESULT.WINNER: GAME_RESULT.LOSER
+        });
+        observer.trigger('GAME_FINISHED', {is_winner: !is_winner});
     }
 
     cellClick(x, y) {
@@ -175,15 +192,23 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
+                    console.log('user shoot', data);
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
                     if (data.signal == SIGNALS.MISS) {
                         this.computerShoot();
                     }
+                    if (data.signal == SIGNALS.WIN) {
+                        this.gameFinished(false);
+                    } else {
+                        self.blockClicks = false;
+                    }
                 })
-            .catch((err) => console.log(err))
-            .finally(() => self.blockClicks = false);
+            .catch((err) => {
+                self.blockClicks = false;
+                console.log(err)
+            })
 
         self.blockClicks = true;
     }
@@ -203,7 +228,9 @@ class SeaFieldComp extends SeaField {
                     observer.trigger(
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)})
-                    if (data.signal != SIGNALS.MISS) this.computerShoot();
+                    if (data.signal == SIGNALS.WIN) {
+                        this.gameFinished(false);
+                    } else if (data.signal != SIGNALS.MISS) this.computerShoot();
                 })
             .catch((err) => console.log(err))
     }

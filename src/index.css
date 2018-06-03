@@ -1,5 +1,14 @@
 .seaField {
-    margin: 10px;
+    margin: 20px;
+    float: left;
+}
+
+.seaField.winner {
+    box-shadow: 0 0 50px #ffe10e;
+}
+
+.seaField.looser {
+    opacity: 0.5;
 }
 
 .cell {

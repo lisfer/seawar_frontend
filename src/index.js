@@ -45,6 +45,14 @@ let post = (url, handler, final_handler) => {
     request.send();
 };
 
+let translCoordX = (y) => {
+    return 'abcdefghik'[y];
+};
+
+let translCoordY = (y) => {
+    return y + 1;
+};
+
 class Cell extends React.Component {
 
     render () {
@@ -138,7 +146,7 @@ class SeaField extends React.Component {
         let numbers = '';
         if (this.state.cells.length) {
             numbers = this.state.cells.map(
-                (cell, i) => (<div key={i} className="fieldNumbers">{i}</div>));
+                (cell, i) => (<div key={i} className="fieldNumbers">{i + 1}</div>));
         }
         return numbers;
     }
@@ -181,7 +189,11 @@ class SeaFieldUser extends SeaField {
     }
 
     gameFinished(data={}) {
-        console.log('user', data);
+        if (data.is_alive) {
+            logMessage('-----------------------------------------------');
+            logMessage('USER WIN!!!');
+            logMessage('-----------------------------------------------');
+        }
         this.setState({
             gameFinishedClassName: data.is_alive ? GAME_RESULT.ALIVE: GAME_RESULT.DEFEAT
         });
@@ -198,7 +210,11 @@ class SeaFieldComp extends SeaField {
     }
 
     gameFinished(is_alive=false) {
-        console.log('com', is_alive);
+        if (is_alive) {
+            logMessage('-----------------------------------------------');
+            logMessage('COMPUTER WIN!!!');
+            logMessage('-----------------------------------------------');
+        }
         this.blockClicks = true;
         this.setState({
             gameFinishedClassName: is_alive ? GAME_RESULT.ALIVE: GAME_RESULT.DEFEAT
@@ -218,7 +234,7 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`,
+                    logMessage(`shoots to (${translCoordX(data.x)}, ${translCoordY(data.y)})  => ${data.signal}`,
                         {subject: 'User', result: data.signal});
 
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
@@ -228,7 +244,6 @@ class SeaFieldComp extends SeaField {
                         this.computerShoot();
                     }
                     if (data.signal === SIGNALS.WIN) {
-                        logMessage('USER WIN!!!');
                         this.gameFinished(false);
                     } else {
                         self.blockClicks = false;
@@ -251,13 +266,12 @@ class SeaFieldComp extends SeaField {
                 })
             .then(
                 (data) => {
-                    logMessage(`shoots to (${data.x}, ${data.y})  => ${data.signal}`,
+                    logMessage(`shoots to (${translCoordX(data.x)}, ${translCoordY(data.y)})  => ${data.signal}`,
                         {subject: 'Computer', result: data.signal});
                     observer.trigger(
                         'SHOOT_TO_USER',
                         {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)});
                     if (data.signal === SIGNALS.WIN) {
-                        logMessage('COMPUTER WIN!!!');
                         this.gameFinished(true);
                     } else if (data.signal !== SIGNALS.MISS) this.computerShoot();
                 })

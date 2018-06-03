@@ -28,7 +28,8 @@
 
 .fieldNumbersBlock {
     display: inline-block;
-    width: 15px;
+    padding: 4px;
+    text-align: right;
 }
 
 .fieldNumbersBlock .fieldNumbers {

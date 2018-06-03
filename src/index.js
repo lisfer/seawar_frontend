@@ -1,11 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import Observer from "./observer";
 
 
 const SEA = {EMPTY: 'empty', SHIP: 'ship', BORDER: 'border', MISS: 'miss', HIT: 'hit'};
 const SIGNALS = {MISS: 'miss', HIT: 'hit', KILLED:5, WIN:5};
 const SERVER = 'http://localhost:5000';
+
+
+var observer = new Observer();
+window.observer = observer;
+
 
 let preparePostData = (data) => {
     let form = new FormData();
@@ -62,7 +68,6 @@ class SeaField extends React.Component {
             maxX: null,
             maxY: null
         };
-        //  this.initField();
     }
 
     componentDidMount() {
@@ -131,11 +136,21 @@ class SeaField extends React.Component {
 
 class SeaFieldUser extends SeaField {
 
+    constructor(props) {
+        super(props);
+        observer.add('SHOOT_TO_USER', this.incomeShoot.bind(this));
+    }
+
     initField() {
         let self = this;
         post(SERVER + '/api/init_user_ship', (data) => {
             self.updateCoordinates(data.ships, SEA.SHIP, self.createField(data.max_x, data.max_y).cells);
         })
+    }
+
+    incomeShoot(data) {
+        this.set(data.x, data.y, (data.value == true ? SEA.HIT : SEA.MISS));
+        if (data.border) this.updateCoordinates(data.border, SEA.BORDER);
     }
 }
 
@@ -163,11 +178,34 @@ class SeaFieldComp extends SeaField {
                     self.set(data.x, data.y, (data.signal === SIGNALS.MISS ? SEA.MISS: SEA.HIT));
                     if (data.cells) self.updateCoordinates(data.cells, SEA.SHIP);
                     if (data.border) self.updateCoordinates(data.border, SEA.BORDER);
+                    if (data.signal == SIGNALS.MISS) {
+                        this.computerShoot();
+                    }
                 })
             .catch((err) => console.log(err))
             .finally(() => self.blockClicks = false);
 
         self.blockClicks = true;
+    }
+
+    computerShoot () {
+        let self = this;
+
+        fetch(SERVER + '/api/computer_shoot', {method: 'POST', credentials: 'include'})
+            .then(
+                (resp) => {
+                    if (!resp.ok) throw Error(resp.statusText);
+                    return resp.json()
+                })
+            .then(
+                (data) => {
+                    console.log('comp shoot', data);
+                    observer.trigger(
+                        'SHOOT_TO_USER',
+                        {border: data.border, x: data.x, y: data.y, value: Boolean(data.signal !== SIGNALS.MISS)})
+                    if (data.signal != SIGNALS.MISS) this.computerShoot();
+                })
+            .catch((err) => console.log(err))
     }
 
     renderCells () {
@@ -180,7 +218,6 @@ class SeaFieldComp extends SeaField {
                 </div>));
     }
 }
-
 
 ReactDOM.render(
     <div>

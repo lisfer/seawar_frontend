@@ -148,10 +148,9 @@ class SeaField extends React.Component {
         let cells = this.renderCells();
 
         return (
-            <div className="seaFieldSurrounder">
+            <div className={"seaFieldSurrounder " +  this.state.gameFinishedClassName}>
                 <div className="fieldNumbersBlock">{this.renderLeftCations()}</div>
-                <div className ={'seaField ' + this.state.gameFinishedClassName}>
-
+                <div className ="seaField">
                     <div>{this.renderTopCaptions()}</div>
                     {cells}
                 </div>

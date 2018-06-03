@@ -1,6 +1,8 @@
 
 .seaFieldSurrounder {
     display: inline-block;
+    margin: 20px;
+    padding-left: 20px;
 }
 
 .seaField {
@@ -8,11 +10,11 @@
     display: inline-block;
 }
 
-.seaField.defeated {
+.seaFieldSurrounder.defeated {
     box-shadow: 0 0 50px #ffe10e;
 }
 
-.seaField.alive {
+.seaFieldSurrounder.alive {
     opacity: 0.5;
 }
 
